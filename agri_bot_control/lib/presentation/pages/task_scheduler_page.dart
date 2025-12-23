@@ -28,7 +28,6 @@ class TaskSchedulerPage extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(), // Standard Nav
     );
   }
 
@@ -145,22 +144,6 @@ class TaskSchedulerPage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: 1, // Tasks tab active
-      selectedItemColor: Colors.green,
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Tasks"),
-        BottomNavigationBarItem(icon: Icon(Icons.sports_esports_outlined), label: "Control"),
-        BottomNavigationBarItem(icon: Icon(Icons.notifications_outlined), label: "Alerts"),
-        BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: "Settings"),
-      ],
     );
   }
 }

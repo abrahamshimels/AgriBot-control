@@ -35,6 +35,9 @@ dependencies:
   equatable: ^2.0.5     # Object comparison
   google_fonts: ^6.1.0  # For typography
   font_awesome_flutter: ^10.7.0 # Icons
+  flutter_riverpod: ^2.5.1
+  http: ^1.2.0
+  go_router: ^14.2.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

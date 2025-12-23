@@ -28,7 +28,6 @@ class ManualControlPage extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -45,10 +44,6 @@ class ManualControlPage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
           const Text(
             "Manual Control",
             style: TextStyle(
@@ -112,28 +107,33 @@ class ManualControlPage extends StatelessWidget {
   }
 
   Widget _buildEmergencyStop() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.red,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.warning, color: Colors.white),
-          SizedBox(width: 10),
-          Text(
-            "Emergency Stop",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+    return ElevatedButton(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.warning, color: Colors.white),
+            SizedBox(width: 10),
+            Text(
+              "Emergency Stop",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+      onPressed: () {
+        // Implement emergency stop functionality here
+      },
     );
   }
 
@@ -180,14 +180,20 @@ class ManualControlPage extends StatelessWidget {
   }
 
   Widget _controlBtn(IconData icon) {
-    return Container(
-      margin: const EdgeInsets.all(5),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.green.shade50,
-        borderRadius: BorderRadius.circular(10),
+    return ElevatedButton(
+      child: Container(
+        margin: const EdgeInsets.all(5),
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.green.shade50,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: const Color.fromARGB(255, 3, 3, 3)),
       ),
-      child: Icon(icon, color: Colors.blueGrey),
+      onPressed: () {
+        // Implement directional control functionality here
+      },
+      
     );
   }
 
@@ -230,34 +236,6 @@ class ManualControlPage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: 2, // Control tab active [cite: 219]
-      selectedItemColor: Colors.green,
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_month),
-          label: "Tasks",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.sports_esports),
-          label: "Control",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.notifications_outlined),
-          label: "Alerts",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings_outlined),
-          label: "Settings",
-        ),
-      ],
     );
   }
 }
