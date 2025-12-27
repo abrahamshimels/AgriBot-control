@@ -10,7 +10,13 @@ class DashboardPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF6F8FA),
       body: SingleChildScrollView(
         child: Column(
-          children: const [
+          children: [
+          ElevatedButton(onPressed: (){
+            context.go('/signup');
+          }, child: Text("Sign Up")),
+          ElevatedButton(onPressed: (){
+            context.go('/login');
+          }, child: Text("Login")),
             _HeaderSection(),
             SizedBox(height: 20),
             _QuickActions(),
@@ -301,7 +307,7 @@ class _QuickTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: () {
-        context.go('/${path}');
+        context.go('/$path');
       },
       child: Container(
         decoration: BoxDecoration(

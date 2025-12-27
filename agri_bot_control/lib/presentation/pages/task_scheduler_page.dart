@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TaskSchedulerPage extends StatelessWidget {
+  const TaskSchedulerPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

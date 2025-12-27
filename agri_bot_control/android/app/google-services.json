@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "862556238662",
+    "project_id": "agro-robot-control",
+    "storage_bucket": "agro-robot-control.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:862556238662:android:aab996146c69bcc369eb47",
+        "android_client_info": {
+          "package_name": "com.example.agri_bot_control"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUozFE34wVbtCZaDeQbK5TZSajscRFRqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,3 +1,7 @@
+import 'package:agri_bot_control/features/auth/presentation/pages/forget_password_page.dart';
+import 'package:agri_bot_control/features/auth/presentation/pages/login_page.dart';
+import 'package:agri_bot_control/features/auth/presentation/pages/signUp_page.dart';
+import 'package:agri_bot_control/features/auth/presentation/pages/verify_email.dart';
 import 'package:agri_bot_control/presentation/pages/alerts_page.dart';
 import 'package:agri_bot_control/presentation/pages/dashboard_page.dart';
 import 'package:agri_bot_control/presentation/pages/manual_control_page.dart';
@@ -69,6 +73,23 @@ final GoRouter appRouter = GoRouter(
           path: '/alerts',
           builder: (context, state) => const AlertsPage(),
         ),
+        GoRoute(
+          path: '/signup',
+          builder: (context, state) => const SignupPage(),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginPage(),
+        ),
+        GoRoute(
+          path: '/verify-email',
+          builder: (context, state) => const VerifyEmailPage(),
+        ),
+        GoRoute(
+          path: '/forgot-password',
+          builder: (context, state) => const ForgotPasswordPage(),
+        ),
+
       ],
     ),
   ],
