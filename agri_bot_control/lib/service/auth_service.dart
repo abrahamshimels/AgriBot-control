@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -9,7 +11,9 @@ class AuthService {
   /// Current logged-in user
   User? get currentUser => _auth.currentUser;
 
-  /// Sign in with email and password
+  // =========================
+  // EMAIL / PASSWORD METHODS
+  // =========================
   Future<User?> signInWithEmailAndPassword({
     required String email,
     required String password,
@@ -25,7 +29,6 @@ class AuthService {
     }
   }
 
-  /// Register a new user with email and password
   Future<User?> registerWithEmailAndPassword({
     required String email,
     required String password,
@@ -41,12 +44,10 @@ class AuthService {
     }
   }
 
-  /// Sign out the current user
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  /// Send email verification
   Future<void> sendEmailVerification() async {
     final user = currentUser;
     if (user != null && !user.emailVerified) {
@@ -59,21 +60,18 @@ class AuthService {
     }
   }
 
-  /// Send password reset email
   Future<void> sendPasswordResetEmail({required String email}) async {
     await _auth.sendPasswordResetEmail(email: email);
   }
 
-  /// Update user display name
   Future<void> updateDisplayName(String displayName) async {
     final user = currentUser;
     if (user != null) {
       await user.updateDisplayName(displayName);
-      await user.reload(); // Refresh the user object
+      await user.reload();
     }
   }
 
-  /// Update user photo URL
   Future<void> updatePhotoURL(String photoURL) async {
     final user = currentUser;
     if (user != null) {
@@ -82,7 +80,6 @@ class AuthService {
     }
   }
 
-  /// Update user email (requires recent login)
   Future<void> updateEmail(String email) async {
     final user = currentUser;
     if (user != null) {
@@ -90,7 +87,6 @@ class AuthService {
     }
   }
 
-  /// Update user password (requires recent login)
   Future<void> updatePassword(String password) async {
     final user = currentUser;
     if (user != null) {
@@ -98,7 +94,6 @@ class AuthService {
     }
   }
 
-  /// Delete current user (requires recent login)
   Future<void> deleteUser() async {
     final user = currentUser;
     if (user != null) {
@@ -106,7 +101,6 @@ class AuthService {
     }
   }
 
-  /// Re-authenticate user with email & password
   Future<void> reauthenticate({
     required String email,
     required String password,
@@ -121,7 +115,57 @@ class AuthService {
     }
   }
 
-  /// Private method to handle FirebaseAuthException with readable messages
+  // =========================
+  // GOOGLE SIGN-IN (WEB / MOBILE)
+  // =========================
+  Future<User?> signInWithGoogle() async {
+    try {
+      // 🌐 Web
+      if (kIsWeb) {
+        final GoogleAuthProvider provider = GoogleAuthProvider();
+        provider.addScope('email');
+        provider.setCustomParameters({'prompt': 'select_account'});
+
+        final UserCredential userCredential = await _auth.signInWithPopup(
+          provider,
+        );
+        return userCredential.user;
+      }
+
+      // 📱 Android / iOS
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        // User cancelled the sign-in
+        return null;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
+
+      return userCredential.user;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthError(e);
+    } catch (e) {
+      // General error (network, popup blocked, etc.)
+      throw FirebaseAuthException(
+        code: 'google-sign-in-failed',
+        message: e.toString(),
+      );
+    }
+  }
+
+  // =========================
+  // PRIVATE ERROR HANDLER
+  // =========================
   FirebaseAuthException _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':

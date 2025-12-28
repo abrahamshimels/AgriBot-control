@@ -19,6 +19,9 @@ class _SignupPageState extends State<SignupPage> {
 
   bool _isLoading = false;
 
+  // =====================
+  // EMAIL / PASSWORD SIGNUP
+  // =====================
   Future<void> _onSignupPressed() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -33,49 +36,78 @@ class _SignupPageState extends State<SignupPage> {
         password: password,
       );
 
-      if (!mounted) return; // ✅ Guard against async context issues
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
       if (uid != null) {
-        // Optional: send email verification
-        final emailSent = await _authController.sendEmailVerification();
+        await _authController.sendEmailVerification();
 
-        if (!mounted) return; // ✅ Guard again before using context
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              emailSent
-                  ? 'Registration successful! Verification email sent.'
-                  : 'Registration successful!',
-            ),
+          const SnackBar(
+            content: Text('Registration successful! Verification email sent.'),
             backgroundColor: Colors.green,
           ),
         );
 
-        // Navigate safely
-        if (mounted) context.go('/dashboard');
+        context.go('/dashboard');
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration failed. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration failed. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  // =====================
+  // GOOGLE SIGN-IN
+  // =====================
+  Future<void> _onGoogleSignupPressed() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final success = await _authController.loginWithGoogle();
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
+          const SnackBar(
+            content: Text('Signed in with Google successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        context.go('/dashboard');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google sign-in cancelled or failed'),
             backgroundColor: Colors.red,
           ),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google Sign-In error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -91,11 +123,12 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Sign Up')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
+              // Email
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -105,13 +138,16 @@ class _SignupPageState extends State<SignupPage> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty || !value.contains('@')) {
+                  if (value == null || !value.contains('@')) {
                     return 'Please enter a valid email';
                   }
                   return null;
                 },
               ),
+
               const SizedBox(height: 16),
+
+              // Password
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
@@ -127,7 +163,10 @@ class _SignupPageState extends State<SignupPage> {
                   return null;
                 },
               ),
+
               const SizedBox(height: 24),
+
+              // Create Account Button
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : SizedBox(
@@ -141,11 +180,30 @@ class _SignupPageState extends State<SignupPage> {
                         ),
                       ),
                     ),
+
+              const SizedBox(height: 16),
+
+              // Google Sign-In Button
+              _isLoading
+                  ? const SizedBox.shrink()
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        icon: Image.asset('assets/img/google.png', height: 22),
+                        label: const Text(
+                          'Continue with Google',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        onPressed: _onGoogleSignupPressed,
+                      ),
+                    ),
+
               const SizedBox(height: 12),
+
+              // Login Redirect
               TextButton(
-                onPressed: () {
-                  if (mounted) context.go('/login');
-                },
+                onPressed: () => context.go('/login'),
                 child: const Text('Already have an account? Log in'),
               ),
             ],

@@ -115,4 +115,24 @@ class AuthController {
       return false;
     }
   }
+
+  // =========================
+  // GOOGLE SIGN-IN
+  // =========================
+  /// Log in using Google account
+  /// Returns true if login is successful, false otherwise
+  Future<bool> loginWithGoogle() async {
+    try {
+      final user = await _authService.signInWithGoogle();
+      return user != null;
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Google Sign-In error: $e\n$stackTrace');
+      }
+      return false;
+    }
+  }
+
+
+  
 }

@@ -18,6 +18,10 @@ class _LoginPageState extends State<LoginPage> {
   final AuthController _authController = AuthController();
 
   bool _isLoading = false;
+
+  // =====================
+  // EMAIL / PASSWORD LOGIN
+  // =====================
   Future<void> _onLoginPressed() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -32,18 +36,15 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
 
-      if (!mounted) return; // ✅ Guard here
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      // Store local context reference for SnackBar/navigation
-      final localContext = context;
+      final user = _authController.currentUser;
 
       if (success) {
-        await _authController.currentUser?.reload();
-        final user = _authController.currentUser;
-
+        await user?.reload();
         if (user != null && !user.emailVerified) {
-          ScaffoldMessenger.of(localContext).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Please verify your email before logging in.'),
               backgroundColor: Colors.orange,
@@ -52,11 +53,9 @@ class _LoginPageState extends State<LoginPage> {
           context.go('/verify-email');
           return;
         }
-
-        // Verified → navigate to dashboard
         context.go('/dashboard');
       } else {
-        ScaffoldMessenger.of(localContext).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Login failed. Check your credentials.'),
             backgroundColor: Colors.red,
@@ -66,10 +65,49 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // =====================
+  // GOOGLE SIGN-IN
+  // =====================
+  Future<void> _onGoogleLoginPressed() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final success = await _authController.loginWithGoogle();
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signed in with Google successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.go('/dashboard');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google sign-in cancelled or failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google Sign-In error: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -93,6 +131,7 @@ class _LoginPageState extends State<LoginPage> {
           key: _formKey,
           child: ListView(
             children: [
+              // Email
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -108,7 +147,10 @@ class _LoginPageState extends State<LoginPage> {
                   return null;
                 },
               ),
+
               const SizedBox(height: 16),
+
+              // Password
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
@@ -124,7 +166,10 @@ class _LoginPageState extends State<LoginPage> {
                   return null;
                 },
               ),
+
               const SizedBox(height: 24),
+
+              // Login Button
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : SizedBox(
@@ -138,17 +183,34 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+
+              const SizedBox(height: 16),
+
+              // Google Sign-In Button
+              _isLoading
+                  ? const SizedBox.shrink()
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        icon: Image.asset('assets/img/google.png', height: 22),
+                        label: const Text(
+                          'Continue with Google',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        onPressed: _onGoogleLoginPressed,
+                      ),
+                    ),
+
               const SizedBox(height: 12),
+
+              // Links
               TextButton(
-                onPressed: () {
-                  if (mounted) context.go('/signup');
-                },
+                onPressed: () => context.go('/signup'),
                 child: const Text('Don\'t have an account? Sign up'),
               ),
               TextButton(
-                onPressed: () {
-                  if (mounted) context.go('/forgot-password');
-                },
+                onPressed: () => context.go('/forgot-password'),
                 child: const Text('Forgot password?'),
               ),
             ],
