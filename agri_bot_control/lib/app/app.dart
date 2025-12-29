@@ -6,9 +6,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  MaterialApp.router(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
+      title: 'AgriBot Control',
       routerConfig: appRouter,
+      theme: ThemeData(primarySwatch: Colors.green),
     );
   }
 }

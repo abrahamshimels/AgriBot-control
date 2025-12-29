@@ -12,7 +12,20 @@
           "package_name": "com.example.agri_bot_control"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "862556238662-546fh961lfubdaqcmb5ip7airem0qlhk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.agri_bot_control",
+            "certificate_hash": "5fbb65ed5177afce33b32dcbc11e332c4747c851"
+          }
+        },
+        {
+          "client_id": "862556238662-8rm2461b0h0spauf05sj756ferqa1rvn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAUozFE34wVbtCZaDeQbK5TZSajscRFRqg"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "862556238662-8rm2461b0h0spauf05sj756ferqa1rvn.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "862556238662-8b548rirg5asku98gmkdu2q2la8ttf2h.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.agriBotControl"
+              }
+            }
+          ]
         }
       }
     }

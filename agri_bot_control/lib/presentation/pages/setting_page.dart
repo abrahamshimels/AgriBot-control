@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../features/auth/presentation/controller/auth_controller.dart';
+import '../../shared/robot_globals.dart' as globals;
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -8,9 +12,27 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final TextEditingController _ipController = TextEditingController(
+    text: globals.robotIP,
+  );
+  final AuthController _authController = AuthController();
+
   double _currentSpeed = 3.0;
   String _operationMode = "Automatic";
-  String _language = "English";
+  bool _wifiConnected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkWifiStatus();
+  }
+
+  Future<void> _checkWifiStatus() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    setState(() {
+      _wifiConnected = connectivityResult == ConnectivityResult.wifi;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +45,9 @@ class _SettingsPageState extends State<SettingsPage> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                _buildProfileSection(),
-                const SizedBox(height: 20),
                 _buildRobotSettings(),
                 const SizedBox(height: 20),
                 _buildConnectivitySection(),
-                const SizedBox(height: 20),
-                _buildLanguageSection(),
                 const SizedBox(height: 20),
                 _buildAboutSection(),
                 const SizedBox(height: 30),
@@ -65,51 +83,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildProfileSection() {
-    return _buildCardWrapper(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.person, color: Colors.blue),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                "Profile",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "Farmer Name",
-            style: TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-          const Text(
-            "Abebe Kebede",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 15),
-          const Text(
-            "Phone Number",
-            style: TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-          const Text(
-            "+251 911 234 567",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // -------------------- Robot Settings --------------------
   Widget _buildRobotSettings() {
     return _buildCardWrapper(
       child: Column(
@@ -129,6 +103,52 @@ class _SettingsPageState extends State<SettingsPage> {
               const Text(
                 "Robot Settings",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            "Robot IP",
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _ipController,
+                  decoration: const InputDecoration(
+                    hintText: "e.g., http://192.168.4.1",
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  final ip = _ipController.text.trim();
+                  if (ip.isNotEmpty) {
+                    globals.robotIP = ip;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Robot IP updated to $ip"),
+                        backgroundColor: Colors.blue,
+                      ),
+                    );
+                  }
+                },
+                child: const Text("Set"),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  backgroundColor: Colors.green,
+                ),
               ),
             ],
           ),
@@ -194,11 +214,17 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // -------------------- Connectivity --------------------
   Widget _buildConnectivitySection() {
     return _buildCardWrapper(
       child: Column(
         children: [
-          _statusRow(Icons.wifi, "Wi-Fi", "Connected", Colors.orange),
+          _statusRow(
+            Icons.wifi,
+            "Wi-Fi",
+            _wifiConnected ? "Connected" : "Disconnected",
+            _wifiConnected ? Colors.green : Colors.red,
+          ),
           const SizedBox(height: 15),
           _statusRow(
             Icons.settings_input_antenna,
@@ -223,64 +249,15 @@ class _SettingsPageState extends State<SettingsPage> {
         const SizedBox(width: 12),
         Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const Spacer(),
-        const Text(
-          "Connected",
-          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+        Text(
+          status,
+          style: TextStyle(color: iconColor, fontWeight: FontWeight.bold),
         ),
       ],
     );
   }
 
-  Widget _buildLanguageSection() {
-    return _buildCardWrapper(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.language, color: Colors.blue),
-              const SizedBox(width: 12),
-              const Text(
-                "Language",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Row(
-            children: [
-              _langBtn("English"),
-              const SizedBox(width: 10),
-              _langBtn("Amharic (አማርኛ)"),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _langBtn(String lang) {
-    bool isSel = _language == lang;
-    return Expanded(
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          backgroundColor: isSel
-              ? Colors.green.withOpacity(0.1)
-              : Colors.transparent,
-          side: BorderSide(color: isSel ? Colors.green : Colors.grey.shade300),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        onPressed: () => setState(() => _language = lang),
-        child: Text(
-          lang,
-          style: TextStyle(color: isSel ? Colors.green : Colors.black),
-        ),
-      ),
-    );
-  }
-
+  // -------------------- About --------------------
   Widget _buildAboutSection() {
     return _buildCardWrapper(
       child: const Column(
@@ -308,9 +285,13 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // -------------------- Logout --------------------
   Widget _buildLogoutButton() {
     return ElevatedButton.icon(
-      onPressed: () {},
+      onPressed: () {
+        _authController.logout();
+        context.go('/login');
+      },
       icon: const Icon(Icons.logout, color: Colors.white),
       label: const Text(
         "Logout",
@@ -328,12 +309,14 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // -------------------- Card Wrapper --------------------
   Widget _buildCardWrapper({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 10)],
       ),
       child: child,
     );

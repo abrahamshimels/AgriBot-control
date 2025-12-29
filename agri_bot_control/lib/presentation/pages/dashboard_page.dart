@@ -7,16 +7,10 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FA),
+      backgroundColor: const Color(0xFFF3F6F9),
       body: SingleChildScrollView(
         child: Column(
-          children: [
-          ElevatedButton(onPressed: (){
-            context.go('/signup');
-          }, child: Text("Sign Up")),
-          ElevatedButton(onPressed: (){
-            context.go('/login');
-          }, child: Text("Login")),
+          children: const [
             _HeaderSection(),
             SizedBox(height: 20),
             _QuickActions(),
@@ -51,16 +45,16 @@ class _HeaderSection extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
+        children: const [
+          Text(
             "AgroRobot Dashboard",
             style: TextStyle(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 20),
           _RobotStatusCard(),
         ],
       ),
@@ -69,13 +63,16 @@ class _HeaderSection extends StatelessWidget {
 }
 
 class _RobotStatusCard extends StatelessWidget {
+  const _RobotStatusCard();
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
       ),
       child: Column(
         children: [
@@ -100,8 +97,9 @@ class _RobotStatusCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: const [
-              _StatusItem("Battery", "78%", Icons.battery_5_bar),
+              _StatusItem("Battery", "78%", Icons.battery_6_bar),
               _StatusItem("Solar", "45W", Icons.wb_sunny),
+              _StatusItem("Moisture", "42%", Icons.water_drop),
             ],
           ),
           const Divider(color: Colors.white30, height: 28),
@@ -137,8 +135,8 @@ class _StatusItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: Colors.white),
-        const SizedBox(height: 4),
+        Icon(icon, color: Colors.white, size: 26),
+        const SizedBox(height: 6),
         Text(title, style: const TextStyle(color: Colors.white70)),
         Text(
           value,
@@ -164,10 +162,16 @@ class _QuickActions extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
-          _ActionButton("Start", Icons.play_arrow, Colors.green),
-          _ActionButton("Pause", Icons.pause, Colors.orange),
-          _ActionButton("Stop", Icons.stop, Colors.red),
+        children: [
+          _ActionButton("Start", Icons.play_arrow, Colors.green, () {
+            context.go('/control');
+          }),
+          _ActionButton("Pause", Icons.pause, Colors.orange, () {
+            context.go('/control');
+          }),
+          _ActionButton("Stop", Icons.stop, Colors.red, () {
+            context.go('/control');
+          }),
         ],
       ),
     );
@@ -178,8 +182,9 @@ class _ActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
+  final VoidCallback onTap;
 
-  const _ActionButton(this.label, this.icon, this.color);
+  const _ActionButton(this.label, this.icon, this.color, this.onTap);
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +192,7 @@ class _ActionButton extends StatelessWidget {
       children: [
         InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {},
+          onTap: onTap,
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -246,12 +251,22 @@ class _SensorCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 6),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withOpacity(0.12),
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade200,
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            Text(title, style: const TextStyle(fontSize: 13)),
+            Text(
+              title,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
             const SizedBox(height: 6),
             Text(
               value,
@@ -284,10 +299,15 @@ class _QuickAccessSection extends StatelessWidget {
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
         children: const [
-          _QuickTile(Icons.control_camera, "Control", Colors.green, "control"),
-          _QuickTile(Icons.schedule, "Schedule", Colors.orange, "schedule"),
-          _QuickTile(Icons.bar_chart, "Analytics", Colors.blue, "analytics"),
-          _QuickTile(Icons.battery_6_bar, "Battery", Colors.red, "battery"),
+          _QuickTile(
+            Icons.control_camera,
+            "Control",
+            Colors.green,
+            "control",
+          ),
+          _QuickTile(Icons.bar_chart, "Analytics", Colors.blue, "alerts"),
+          _QuickTile(Icons.battery_6_bar, "Battery", Colors.orange, "alerts"),
+          _QuickTile(Icons.wb_sunny, "Solar", Colors.yellow, "dashboard"),
         ],
       ),
     );
@@ -313,11 +333,18 @@ class _QuickTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: color.withOpacity(0.12),
           borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 32, color: color),
+            Icon(icon, size: 36, color: color),
             const SizedBox(height: 8),
             Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
           ],
