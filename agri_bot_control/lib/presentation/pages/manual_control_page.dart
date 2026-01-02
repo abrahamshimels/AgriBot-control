@@ -12,11 +12,13 @@ class ManualControlPage extends StatefulWidget {
 
 class _ManualControlPageState extends State<ManualControlPage> {
   bool isMoving = false;
-  bool isSpraying = false;
-  double speed = 0.0;
+  int speedLevel = 1;
 
-  /// Sends a command to the robot without waiting for full response.
-  /// Shows instructions if not connected to Wi-Fi.
+  // ===== AUTO SERVO STATE =====
+  bool autoServoEnabled = false;
+  int openDelay = 2;
+  int closeDelay = 2;
+
   Future<void> sendCommand(String endpoint) async {
     final url = "${globals.robotIP}/$endpoint";
     final connectivityResult = await Connectivity().checkConnectivity();
@@ -24,10 +26,7 @@ class _ManualControlPageState extends State<ManualControlPage> {
     if (connectivityResult != ConnectivityResult.wifi) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            "Please connect your device to the robot Wi-Fi (RC_CAR_WIFI) before sending commands.",
-            maxLines: 3,
-          ),
+          content: Text("Connect to RC_CAR_WIFI before sending commands."),
           backgroundColor: Colors.orange,
         ),
       );
@@ -37,80 +36,63 @@ class _ManualControlPageState extends State<ManualControlPage> {
     try {
       final request = http.Request('GET', Uri.parse(url));
       await request.send();
-      print("Command sent: $url");
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Command sent to robot."),
-          duration: Duration(seconds: 1),
-          backgroundColor: Colors.green,
-        ),
-      );
     } catch (e) {
-      print("Error sending command: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error sending command: $e"),
+          content: Text("Command failed: $e"),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
 
-  void toggleMovement() {
-    sendCommand(isMoving ? "S" : "F");
-
-    setState(() {
-      isMoving = !isMoving;
-      speed = isMoving ? 1.5 : 0.0;
-    });
+  // ================= MOVEMENT =================
+  void move(String cmd) {
+    sendCommand(cmd);
+    setState(() => isMoving = cmd != "S");
   }
 
-  void moveDirection(String dir) {
-    if (!isMoving && dir != "Stop") return;
+  // ================= SPEED =================
+  void setSpeed(int level) {
+    speedLevel = level;
+    sendCommand(level == 10 ? "0" : level.toString());
+    setState(() {});
+  }
 
-    switch (dir) {
-      case "Forward":
-        sendCommand("F");
-        break;
-      case "Backward":
-        sendCommand("B");
-        break;
-      case "Left":
-      case "Right":
-        sendCommand("F"); // Update for differential turning if supported
-        break;
-      case "Stop":
-        sendCommand("S");
-        break;
+  // ================= SERVO =================
+  void servo(String cmd) => sendCommand(cmd);
+
+  // ================= AUTO SERVO LOGIC =================
+  Future<void> startAutoServo() async {
+    while (autoServoEnabled) {
+      // Open servo (180°)
+      await sendCommand("C");
+      await Future.delayed(Duration(seconds: openDelay));
+
+      if (!autoServoEnabled) break;
+
+      // Close servo (0°)
+      await sendCommand("A");
+      await Future.delayed(Duration(seconds: closeDelay));
     }
-  }
-
-  void toggleSpraying() {
-    sendCommand(isSpraying ? "C" : "O");
-
-    setState(() {
-      isSpraying = !isSpraying;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: const Color(0xFFF4F6FA),
       body: Column(
         children: [
-          _buildHeader(),
+          _header(),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  _buildStatusCard(),
-                  const SizedBox(height: 20),
-                  _buildDirectionalControl(),
-                  const SizedBox(height: 20),
-                  _buildSeedSprayingControl(),
+                  _movementCard(),
+                  _speedCard(),
+                  _servoCard(),
+                  _autoServoCard(),
                 ],
               ),
             ),
@@ -120,19 +102,19 @@ class _ManualControlPageState extends State<ManualControlPage> {
     );
   }
 
-  Widget _buildHeader() {
+  // ================= UI =================
+
+  Widget _header() {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF00964A), Color(0xFF0056D2)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+          colors: [Color(0xFF00A86B), Color(0xFF0056D2)],
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: const Text(
-        "Manual Control",
+        "Robot Manual Control",
         style: TextStyle(
           color: Colors.white,
           fontSize: 24,
@@ -142,135 +124,173 @@ class _ManualControlPageState extends State<ManualControlPage> {
     );
   }
 
-  Widget _buildStatusCard() {
-    return _buildCardWrapper(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Robot Status", style: TextStyle(color: Colors.grey)),
-              const SizedBox(height: 8),
-              Text(
-                isMoving ? "Moving" : "Stopped",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: isMoving ? Colors.green : Colors.red,
-                ),
-              ),
-            ],
-          ),
-          Column(
-            children: [
-              const Text("Speed", style: TextStyle(color: Colors.grey)),
-              Text(
-                "${speed.toStringAsFixed(1)} m/s",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDirectionalControl() {
-    return _buildCardWrapper(
+  Widget _movementCard() {
+    return _card(
+      title: "Movement",
       child: Column(
         children: [
-          const Text(
-            "Directional Control",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          _directionBtn(Icons.arrow_upward, () => moveDirection("Forward")),
-          const SizedBox(height: 10),
+          _iconBtn(Icons.arrow_upward, () => move("F")),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _directionBtn(Icons.arrow_back, () => moveDirection("Left")),
+              _iconBtn(Icons.arrow_back, () => move("L")),
               const SizedBox(width: 20),
-              _centerBtn(),
+              _iconBtn(
+                isMoving ? Icons.stop : Icons.play_arrow,
+                () => move(isMoving ? "S" : "F"),
+                big: true,
+                color: isMoving ? Colors.red : Colors.green,
+              ),
               const SizedBox(width: 20),
-              _directionBtn(Icons.arrow_forward, () => moveDirection("Right")),
+              _iconBtn(Icons.arrow_forward, () => move("R")),
             ],
           ),
-          const SizedBox(height: 10),
-          _directionBtn(Icons.arrow_downward, () => moveDirection("Backward")),
+          _iconBtn(Icons.arrow_downward, () => move("B")),
         ],
       ),
     );
   }
 
-  Widget _directionBtn(IconData icon, VoidCallback onPressed) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.green.shade50,
-        foregroundColor: Colors.black,
-        padding: const EdgeInsets.all(15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        elevation: 5,
+  Widget _speedCard() {
+    return _card(
+      title: "Speed Control (Level $speedLevel)",
+      child: Slider(
+        min: 1,
+        max: 10,
+        divisions: 9,
+        value: speedLevel.toDouble(),
+        label: speedLevel.toString(),
+        onChanged: (v) => setSpeed(v.round()),
       ),
-      onPressed: onPressed,
-      child: Icon(icon, size: 28),
     );
   }
 
-  Widget _centerBtn() {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isMoving ? Colors.red : Colors.green,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.all(20),
-        shape: const CircleBorder(),
-        elevation: 8,
-      ),
-      onPressed: toggleMovement,
-      child: Icon(isMoving ? Icons.stop : Icons.play_arrow, size: 30),
-    );
-  }
-
-  Widget _buildSeedSprayingControl() {
-    return _buildCardWrapper(
+  Widget _servoCard() {
+    return _card(
+      title: "Servo Control (Manual)",
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _textBtn("0°", () => servo("A")),
+          _textBtn("90°", () => servo("M")),
+          _textBtn("180°", () => servo("C")),
+        ],
+      ),
+    );
+  }
+
+  Widget _autoServoCard() {
+    return _card(
+      title: "Automatic Servo Control",
+      child: Column(
         children: [
           Row(
             children: [
-              Icon(Icons.water_drop, color: Colors.blue.shade300),
-              const SizedBox(width: 10),
-              const Text(
-                "Seed Spraying",
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: "Open Delay (sec)",
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) {
+                    final value = int.tryParse(v);
+                    if (value != null && value > 0) {
+                      openDelay = value;
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: "Close Delay (sec)",
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) {
+                    final value = int.tryParse(v);
+                    if (value != null && value > 0) {
+                      closeDelay = value;
+                    }
+                  },
+                ),
               ),
             ],
           ),
-          Switch(
-            value: isSpraying,
-            onChanged: (_) => toggleSpraying(),
+          const SizedBox(height: 16),
+          SwitchListTile(
+            title: const Text("Automatic Open / Close"),
+            subtitle: const Text("Servo cycles between 180° and 0°"),
+            value: autoServoEnabled,
             activeColor: Colors.green,
-            inactiveThumbColor: Colors.grey,
+            onChanged: (value) {
+              setState(() => autoServoEnabled = value);
+              if (value) startAutoServo();
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCardWrapper({required Widget child}) {
+  Widget _iconBtn(
+    IconData icon,
+    VoidCallback onTap, {
+    bool big = false,
+    Color? color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color ?? Colors.white,
+          foregroundColor: Colors.black,
+          shape: big
+              ? const CircleBorder()
+              : RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: EdgeInsets.all(big ? 24 : 16),
+          elevation: 6,
+        ),
+        onPressed: onTap,
+        child: Icon(icon, size: big ? 36 : 28),
+      ),
+    );
+  }
+
+  Widget _textBtn(String text, VoidCallback onTap) {
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue.shade50,
+        foregroundColor: Colors.black,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      ),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _card({required String title, required Widget child}) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 10)],
       ),
-      child: child,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
     );
   }
 }
